@@ -1,0 +1,73 @@
+# VSPHERE CONNECTIVITY INFORMATION
+VSPHERE_HOSTNAME="vcsa.example.com"
+VSPHERE_USERNAME="username"
+VSPHERE_PASSWORD="password"
+VSPHERE_INSECURE=1
+
+# VSPHERE EXISTING INFRASTRUCTURE
+VSPHERE_DATACENTER="datacenter01"
+VSPHERE_IMAGE_DATASTORE="datastore01"
+VSPHERE_IMAGE_DATASTORE_PATH="images"
+VSPHERE_NODE_DATASTORE="datastore01"
+VSPHERE_NETWORK="VM Network"
+
+# DOWNLOAD URL FOR NECESARY BINARIES (macOS)
+BINARIES_GOVC="https://github.com/vmware/govmomi/releases/download/v0.22.1/govc_darwin_amd64.gz"
+BINARIES_ISO="https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/4.3/4.3.8/rhcos-4.3.8-x86_64-installer.x86_64.iso"
+BINARIES_BIOS="https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/4.3/4.3.8/rhcos-4.3.8-x86_64-metal.x86_64.raw.gz"
+BINARIES_INSTALLER="https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.3.8/openshift-install-mac.tar.gz"
+BINARIES_CLIENT="https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.3.8/openshift-client-mac.tar.gz"
+# DOWNLOAD URL FOR NECESARY BINARIES (Linux)
+# BINARIES_GOVC="https://github.com/vmware/govmomi/releases/download/v0.22.1/govc_linux_amd64.gz"
+# BINARIES_ISO="https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/4.3/4.3.8/rhcos-4.3.8-x86_64-installer.x86_64.iso"
+# BINARIES_BIOS="https://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/4.3/4.3.8/rhcos-4.3.8-x86_64-metal.x86_64.raw.gz"
+# BINARIES_INSTALLER="https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.3.8/openshift-install-linux.tar.gz"
+# BINARIES_CLIENT="https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/4.3.8/openshift-client-linux.tar.gz"
+
+WEBSERVER_EXTERNAL_IP="9.42.67.224"
+WEBSERVER_INTERNAL_IP="192.168.100.221"
+WEBSERVER_PORT="80"
+WEBSERVER_USERNAME="virtuser"
+WEBSERVER_SSHKEY="${HOME}/.ssh/id_rsa"
+WEBSERVER_WEBROOT="/var/www/html"
+
+OPENSHIFT_CLUSTERNAME="mycluster"
+OPENSHIFT_BASEDOMAIN="example.com"
+OPENSHIFT_PULLSECRET="${HOME}/.pull-secret"
+OPENSHIFT_MACHINECIDR="192.168.100.0/24"
+OPENSHIFT_CLUSTERCIDR="10.128.0.0/14"
+OPENSHIFT_SERVICECIDR="172.30.0.0/16"
+OPENSHIFT_HOSTPREFIX="23"
+
+
+NETWORK_GATEWAY="192.168.100.1"
+NETWORK_NETMASK="255.255.255.0"
+NETWORK_NAMESERVERS=(192.168.100.222 192.168.100.222)
+NETWORK_DEVICE="ens32"
+
+BOOTSTRAP_IPADDRESS="192.168.100.225"
+BOOTSTRAP_HOSTNAME="bootstrap"
+BOOTSTRAP_CPU="4"
+BOOTSTRAP_MEM="16"
+BOOTSTRAP_DISK="128"
+
+MASTER_COUNT=3
+MASTER_IPADDRESS=(192.168.100.226 192.168.100.227 192.168.100.228)
+MASTER_HOSTNAME=(master01 master02 master03)
+MASTER_CPU="8"
+MASTER_MEM="32"
+MASTER_DISK="128"
+
+WORKER_COUNT=5
+WORKER_IPADDRESS=(192.168.100.229 192.168.100.230 192.168.100.232 192.168.100.233 192.168.100.234)
+WORKER_HOSTNAME=(worker01 worker02 worker03 worker04 worker05)
+WORKER_CPU="8"
+WORKER_MEM="32"
+WORKER_DISK="128"
+
+STORAGE_COUNT=0
+STORAGE_IPADDRESS=(192.168.100.235 192.168.100.236 192.168.100.237)
+STORAGE_HOSTNAME=(worker06 worker07 worker08)
+STORAGE_CPU="16"
+STORAGE_MEM="64"
+STORAGE_DISK="128"
