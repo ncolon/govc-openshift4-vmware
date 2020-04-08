@@ -85,7 +85,7 @@ function create_all_isos() {
     let "c=i-1"
     create_iso "${WORKER_IPADDRESS[$c]}" "${WORKER_HOSTNAME[$c]}.${OPENSHIFT_CLUSTERNAME}.${OPENSHIFT_BASEDOMAIN}" "worker" $i
   done
-  if [ "${STORAGE_COUNT}" -gt "0" ]; then
+  if [[ "${STORAGE_COUNT}" -gt "0" ]]; then
     for i in $(eval echo {1..${STORAGE_COUNT}}); do
       let "c=i-1"
       let "s=WORKER_COUNT+i"
@@ -151,9 +151,10 @@ function create_vm() {
   TYPE=$4
   COUNT=${5:-"1"}
   let "MEM=$MEM*1024"
-  binaries/govc vm.create -c=${CPU} -m=${MEM} -disk=${DISK}GB -ds=${VSPHERE_NODE_DATASTORE} -net=${VSPHERE_NETWORK} -pool=${OPENSHIFT_CLUSTERNAME} -folder=${OPENSHIFT_CLUSTERNAME} -on=false -iso=${VSPHERE_IMAGE_DATASTORE_PATH}/${OPENSHIFT_CLUSTERNAME}-${TYPE}-${COUNT}.iso ${OPENSHIFT_CLUSTERNAME}-${TYPE}-${COUNT}
-  binaries/govc vm.change -e disk.enableUUID=1 -vm /${VSPHERE_DATACENTER}/vm/${OPENSHIFT_CLUSTERNAME}/${OPENSHIFT_CLUSTERNAME}-${TYPE}-${COUNT}
-  binaries/govc vm.power -on=true /${VSPHERE_DATACENTER}/vm/${OPENSHIFT_CLUSTERNAME}/${OPENSHIFT_CLUSTERNAME}-${TYPE}-${COUNT}
+  FOLDER="/${VSPHERE_DATACENTER}/vm/${VSPHERE_FOLDER}"
+  binaries/govc vm.create -c=${CPU} -m=${MEM} -disk=${DISK}GB -ds=${VSPHERE_NODE_DATASTORE} -net=${VSPHERE_NETWORK} -pool=${OPENSHIFT_CLUSTERNAME} -folder=${FOLDER} -on=false -iso-datastore=${VSPHERE_IMAGE_DATASTORE} -iso=${VSPHERE_IMAGE_DATASTORE_PATH}/${OPENSHIFT_CLUSTERNAME}-${TYPE}-${COUNT}.iso ${OPENSHIFT_CLUSTERNAME}-${TYPE}-${COUNT}
+  binaries/govc vm.change -e disk.enableUUID=1 -vm ${FOLDER}/${OPENSHIFT_CLUSTERNAME}-${TYPE}-${COUNT}
+  binaries/govc vm.power -on=true ${FOLDER}/${OPENSHIFT_CLUSTERNAME}-${TYPE}-${COUNT}
 }
 
 function create_all_vms() {
@@ -164,20 +165,113 @@ function create_all_vms() {
   for i in $(eval echo {1..${WORKER_COUNT}}); do
     create_vm ${WORKER_CPU} ${WORKER_MEM} ${WORKER_DISK} worker $i
   done
-  if [ "${STORAGE_COUNT}" -gt "0"]; then
+  if [[ "${STORAGE_COUNT}" -gt "0" ]]; then
     for i in $(eval echo {1..${STORAGE_COUNT}}); do
       let "s=WORKER_COUNT+i"
       create_vm ${STORAGE_CPU} ${STORAGE_MEM} ${STORAGE_DISK} worker $s
     done
   fi
-
 } 
 
 function wait_for_cluster() {
+  FOLDER="/${VSPHERE_DATACENTER}/vm/${VSPHERE_FOLDER}"
   binaries/openshift-install --dir=${OPENSHIFT_CLUSTERNAME} wait-for bootstrap-complete
-  binaries/govc vm.destroy /${VSPHERE_DATACENTER}/vm/${OPENSHIFT_CLUSTERNAME}/${OPENSHIFT_CLUSTERNAME}-bootstrap-1
+  binaries/govc vm.destroy /${FOLDER}/${OPENSHIFT_CLUSTERNAME}-bootstrap-1
   binaries/openshift-install --dir=${OPENSHIFT_CLUSTERNAME} wait-for install-complete
 }
+
+
+function configure_storage() {
+  if [[ "${STORAGE_COUNT}" -gt "0" ]]; then
+    for i in $(eval echo {1..${STORAGE_COUNT}}); do
+      let "c=i-1"
+      oc adm taint node ${STORAGE_HOSTNAME[$c]}.${OPENSHIFT_CLUSTERNAME}.${OPENSHIFT_BASEDOMAIN} node.ocs.openshift.io/storage=true:NoSchedule
+      oc label node ${STORAGE_HOSTNAME[$c]}.${OPENSHIFT_CLUSTERNAME}.${OPENSHIFT_BASEDOMAIN} cluster.ocs.openshift.io/openshift-storage=
+    done
+    cat <<EOF | oc create -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    openshift.io/cluster-monitoring: "true"
+  name: openshift-storage
+spec: {}
+EOF
+    cat <<EOF | oc create -f -
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: openshift-storage-operatorgroup
+  namespace: openshift-storage
+spec:
+  serviceAccount:
+    metadata:
+      creationTimestamp: null
+  targetNamespaces:
+  - openshift-storage
+EOF
+    OCS_VERSION=$(oc get packagemanifests -n openshift-marketplace ocs-operator -o template --template '{{range .status.channels}}{{.currentCSVDesc.version}}{{end}}'|tail -1)
+    cat <<EOF | oc create -f -
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: ocs-operator
+  namespace: openshift-storage
+spec:
+  channel: stable-4.2
+  installPlanApproval: Automatic
+  name: ocs-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+  startingCSV: ocs-operator.v${OCS_VERSION}
+EOF
+while ! oc api-resources|grep StorageCluster$ > /dev/null;do
+  echo "Waiting for StorageCluster CRD"
+  sleep 10
+done
+    cat <<EOF | oc create -f -
+apiVersion: ocs.openshift.io/v1
+kind: StorageCluster
+metadata:
+  name: ocs-storagecluster
+  namespace: openshift-storage
+spec:
+  manageNodes: false
+  storageDeviceSets:
+    - count: 1
+      dataPVCTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 2Ti
+          storageClassName: null
+          volumeMode: Block
+      name: ocs-deviceset
+      placement: {}
+      portable: true
+      replica: 3
+      resources: {}
+EOF
+    cat <<EOF | oc create -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: image-registry-storage
+  namespace: openshift-image-registry
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: ${CLOUDPAK_STORAGECLASS_FILE}
+EOF
+    oc patch config cluster --type merge --patch '{"spec": {"managementState": "Managed", "replicas": 2, "storage": {"pvc": {"claim": ""}}}}'
+  fi
+}
+
 
 source ./environment.properties
 
@@ -186,6 +280,7 @@ export GOVC_USERNAME=${VSPHERE_USERNAME}
 export GOVC_PASSWORD=${VSPHERE_PASSWORD}
 export GOVC_INSECURE=${VSPHERE_INSECURE}
 export GOVC_DATASTORE=${VSPHERE_IMAGE_DATASTORE}
+export KUBECONFIG=$PWD/${OPENSHIFT_CLUSTERNAME}/auth/kubeconfig
 
 download_binaries
 extract_iso
@@ -194,3 +289,4 @@ create_ignition_configs
 copy_files_to_webroot
 create_all_vms
 wait_for_cluster
+configure_storage

@@ -10,6 +10,8 @@ VSPHERE_IMAGE_DATASTORE="datastore01"
 VSPHERE_IMAGE_DATASTORE_PATH="images"
 VSPHERE_NODE_DATASTORE="datastore01"
 VSPHERE_NETWORK="VM Network"
+VSPHERE_FOLDER="Folder/SubFolder/mycluster"
+VSPHERE_POOL="mycluster"
 
 # DOWNLOAD URL FOR NECESARY BINARIES (macOS)
 BINARIES_GOVC="https://github.com/vmware/govmomi/releases/download/v0.22.1/govc_darwin_amd64.gz"

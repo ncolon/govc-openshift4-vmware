@@ -79,6 +79,8 @@ INFO Login to the console with user: kubeadmin, password: XXXX-XXXX-XXXX-XXXX
 | VSPHERE_IMAGE_DATASTORE_PATH | vSphere Datastore path where bootable isos will be stored    |
 | VSPHERE_NODE_DATASTORE       | vSphere Datastore for OpenShift nodes                        |
 | VSPHERE_NETWORK              | vSphere Network for OpenShift nodes                          |
+| VSPHERE_FOLDER               | vSphere Folder where VMs will be deployed into               |
+| VSPHERE_POOL                 | vSphere Resource Pool where VMs will be deployed into        |
 | BINARIES_GOVC                | URL for GOVC binary                                          |
 | BINARIES_ISO                 | URL for OpenShift ISO                                        |
 | BINARIES_BIOS                | URL for OpenShift BIOS                                       |
@@ -100,7 +102,7 @@ INFO Login to the console with user: kubeadmin, password: XXXX-XXXX-XXXX-XXXX
 | NETWORK_GATEWAY              | Network Gateway for VMs                                      |
 | NETWORK_NETMASK              | Network Mask for VMs                                         |
 | NETWORK_NAMESERVERS          | Nameservers for VMs.                                         |
-| NETWORK_DEVICE               | Device name for your VMs.  In 4.2 its `ens192`, in 4.3 its `ens32`. |
+| NETWORK_DEVICE               | Interface device name for your VMs.  In 4.2 its `ens192`, in 4.3 its `ens32`. |
 | BOOTSTRAP_IPADDRESS          | IP Address for Bootstrap node                                |
 | BOOTSTRAP_HOSTNAME           | Hostname for Bootstrap node                                  |
 | BOOTSTRAP_CPU                | number of CPUs for Bootstrap node                            |
