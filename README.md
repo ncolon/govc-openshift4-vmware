@@ -99,6 +99,7 @@ INFO Login to the console with user: kubeadmin, password: XXXX-XXXX-XXXX-XXXX
 | OPENSHIFT_CLUSTERCIDR        | The IP address pools for pods. The default is 10.128.0.0/14  |
 | OPENSHIFT_SERVICECIDR        | CIDR for services in the OpenShift SDN                       |
 | OPENSHIFT_HOSTPREFIX         | The prefix size to allocate to each node from the CIDR. For example, 24 would allocate 2^8=256 adresses to each node. |
+| OPENSHIFT_SSHKEY             | Path to the SSH private key.  If it doesn't exist it will create it. |
 | NETWORK_GATEWAY              | Network Gateway for VMs                                      |
 | NETWORK_NETMASK              | Network Mask for VMs                                         |
 | NETWORK_NAMESERVERS          | Nameservers for VMs.                                         |

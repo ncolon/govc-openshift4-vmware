@@ -97,8 +97,7 @@ function create_all_isos() {
 
 function create_ignition_configs() {
   test -e ${OPENSHIFT_CLUSTERNAME} || mkdir ${OPENSHIFT_CLUSTERNAME}
-  PULLSECRET=$(cat ${OPENSHIFT_PULLSECRET})
-  SSHKEY=$(cat ${HOME}/.ssh/openshift_rsa.pub)
+  test -e "${OPENSHIFT_SSHKEY}.pub" || ssh-keygen -t rsa -b 4096 -N '' -f ${OPENSHIFT_SSHKEY}
   cat <<EOF > ${OPENSHIFT_CLUSTERNAME}/install-config.yaml
 apiVersion: v1
 baseDomain: ${OPENSHIFT_BASEDOMAIN}
@@ -126,8 +125,8 @@ platform:
     password: ${VSPHERE_PASSWORD}
     datacenter: ${VSPHERE_DATACENTER}
     defaultDatastore: ${VSPHERE_NODE_DATASTORE}
-pullSecret: '${PULLSECRET}'
-sshKey: '${SSHKEY}'
+pullSecret: '$(< ${OPENSHIFT_PULLSECRET})'
+sshKey: '$(< "${OPENSHIFT_SSHKEY}.pub")'
 EOF
   binaries/openshift-install --dir=${OPENSHIFT_CLUSTERNAME} create ignition-configs
 }
@@ -271,7 +270,6 @@ EOF
     oc patch config cluster --type merge --patch '{"spec": {"managementState": "Managed", "replicas": 2, "storage": {"pvc": {"claim": ""}}}}'
   fi
 }
-
 
 source ./environment.properties
 
